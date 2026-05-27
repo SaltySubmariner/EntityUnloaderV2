@@ -10,18 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="RestoreMonarchy.RocketRedist" Version="3.25.9" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+
     <Reference Include="Assembly-CSharp">
       <HintPath>Libs\Assembly-CSharp.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-
-    <Reference Include="Rocket.API">
-      <HintPath>Libs\Rocket.API.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-
-    <Reference Include="Rocket.Core">
-      <HintPath>Libs\Rocket.Core.dll</HintPath>
       <Private>false</Private>
     </Reference>
 
@@ -49,6 +44,7 @@
       <HintPath>Libs\UnityEngine.PhysicsModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+
   </ItemGroup>
 
 </Project>
