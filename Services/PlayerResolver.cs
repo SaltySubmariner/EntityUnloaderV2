@@ -26,45 +26,18 @@ namespace OfflineUnload.Services
             if (Provider.clients == null)
                 return false;
 
-            foreach (var client in Provider.clients)
+            foreach (SteamPlayer client in Provider.clients)
             {
-                try
+                if (client == null || client.playerID == null)
+                    continue;
+
+                string charName = client.playerID.characterName ?? "";
+                string nickName = client.playerID.nickName ?? "";
+                string playerName = client.playerID.playerName ?? "";
+
+                if (Matches(charName, input) || Matches(nickName, input) || Matches(playerName, input))
                 {
-                    if (client == null)
-                        continue;
-
-                    var player = client.player;
-                    if (player == null)
-                        continue;
-
-                    var channel = player.channel;
-                    if (channel == null)
-                        continue;
-
-                    var owner = channel.owner;
-                    if (owner == null)
-                        continue;
-
-                    var playerId = owner.playerID;
-                    if (playerId == null)
-                        continue;
-
-                    string charName = playerId.characterName ?? string.Empty;
-                    string nickName = playerId.nickName ?? string.Empty;
-                    string playerName = playerId.playerName ?? string.Empty;
-
-                    bool matches =
-                        EqualsIgnoreCase(charName, input) ||
-                        EqualsIgnoreCase(nickName, input) ||
-                        EqualsIgnoreCase(playerName, input) ||
-                        ContainsIgnoreCase(charName, input) ||
-                        ContainsIgnoreCase(nickName, input) ||
-                        ContainsIgnoreCase(playerName, input);
-
-                    if (!matches)
-                        continue;
-
-                    steam64 = playerId.steamID.m_SteamID;
+                    steam64 = client.playerID.steamID.m_SteamID;
 
                     displayName =
                         !string.IsNullOrWhiteSpace(charName) ? charName :
@@ -74,10 +47,6 @@ namespace OfflineUnload.Services
 
                     return true;
                 }
-                catch
-                {
-                    continue;
-                }
             }
 
             return false;
@@ -85,38 +54,19 @@ namespace OfflineUnload.Services
 
         public static string GetBestKnownName(ulong steam64, string fallback = null)
         {
-            if (Provider.clients == null)
-                return fallback ?? steam64.ToString();
-
-            foreach (var client in Provider.clients)
+            if (Provider.clients != null)
             {
-                try
+                foreach (SteamPlayer client in Provider.clients)
                 {
-                    if (client == null)
+                    if (client == null || client.playerID == null)
                         continue;
 
-                    var player = client.player;
-                    if (player == null)
+                    if (client.playerID.steamID.m_SteamID != steam64)
                         continue;
 
-                    var channel = player.channel;
-                    if (channel == null)
-                        continue;
-
-                    var owner = channel.owner;
-                    if (owner == null)
-                        continue;
-
-                    var playerId = owner.playerID;
-                    if (playerId == null)
-                        continue;
-
-                    if (playerId.steamID.m_SteamID != steam64)
-                        continue;
-
-                    string charName = playerId.characterName ?? string.Empty;
-                    string nickName = playerId.nickName ?? string.Empty;
-                    string playerName = playerId.playerName ?? string.Empty;
+                    string charName = client.playerID.characterName ?? "";
+                    string nickName = client.playerID.nickName ?? "";
+                    string playerName = client.playerID.playerName ?? "";
 
                     if (!string.IsNullOrWhiteSpace(charName))
                         return charName;
@@ -126,12 +76,6 @@ namespace OfflineUnload.Services
 
                     if (!string.IsNullOrWhiteSpace(playerName))
                         return playerName;
-
-                    return steam64.ToString();
-                }
-                catch
-                {
-                    continue;
                 }
             }
 
@@ -143,20 +87,13 @@ namespace OfflineUnload.Services
             Logger.Log("[OfflineUnload] " + message);
         }
 
-        private static bool EqualsIgnoreCase(string a, string b)
+        private static bool Matches(string value, string input)
         {
-            return string.Equals(a ?? string.Empty, b ?? string.Empty, StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static bool ContainsIgnoreCase(string a, string b)
-        {
-            a = a ?? string.Empty;
-            b = b ?? string.Empty;
-
-            if (b.Length == 0)
+            if (string.IsNullOrWhiteSpace(value) || string.IsNullOrWhiteSpace(input))
                 return false;
 
-            return a.IndexOf(b, StringComparison.OrdinalIgnoreCase) >= 0;
+            return value.Equals(input, StringComparison.OrdinalIgnoreCase)
+                || value.IndexOf(input, StringComparison.OrdinalIgnoreCase) >= 0;
         }
     }
 }
