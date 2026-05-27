@@ -12,71 +12,150 @@ namespace OfflineUnload.Services
             steam64 = 0;
             displayName = input;
 
-            if (string.IsNullOrWhiteSpace(input))
-                return false;
-
-            input = input.Trim();
-
-            if (ulong.TryParse(input, out steam64))
+            try
             {
-                displayName = GetBestKnownName(steam64, input);
-                return true;
-            }
+                if (string.IsNullOrWhiteSpace(input))
+                    return false;
 
-            if (Provider.clients == null)
-                return false;
+                input = input.Trim();
 
-            foreach (SteamPlayer client in Provider.clients)
-            {
-                if (client == null || client.playerID == null)
-                    continue;
-
-                string charName = client.playerID.characterName ?? "";
-                string nickName = client.playerID.nickName ?? "";
-                string playerName = client.playerID.playerName ?? "";
-
-                if (Matches(charName, input) || Matches(nickName, input) || Matches(playerName, input))
+                // Steam64 direct
+                if (ulong.TryParse(input, out steam64))
                 {
-                    steam64 = client.playerID.steamID.m_SteamID;
-
-                    displayName =
-                        !string.IsNullOrWhiteSpace(charName) ? charName :
-                        !string.IsNullOrWhiteSpace(nickName) ? nickName :
-                        !string.IsNullOrWhiteSpace(playerName) ? playerName :
-                        steam64.ToString();
-
+                    displayName = GetBestKnownName(steam64, input);
                     return true;
                 }
-            }
 
-            return false;
+                if (Provider.clients == null)
+                    return false;
+
+                foreach (SteamPlayer client in Provider.clients)
+                {
+                    try
+                    {
+                        if (client == null)
+                            continue;
+
+                        var id = client.playerID;
+
+                        if (id == null)
+                            continue;
+
+                        ulong clientSteam64 = 0;
+
+                        try
+                        {
+                            clientSteam64 = id.steamID.m_SteamID;
+                        }
+                        catch
+                        {
+                            continue;
+                        }
+
+                        string charName = "";
+                        string nickName = "";
+                        string playerName = "";
+
+                        try { charName = id.characterName ?? ""; } catch { }
+                        try { nickName = id.nickName ?? ""; } catch { }
+                        try { playerName = id.playerName ?? ""; } catch { }
+
+                        bool matched =
+                            Matches(charName, input) ||
+                            Matches(nickName, input) ||
+                            Matches(playerName, input);
+
+                        if (!matched)
+                            continue;
+
+                        steam64 = clientSteam64;
+
+                        if (!string.IsNullOrWhiteSpace(charName))
+                            displayName = charName;
+                        else if (!string.IsNullOrWhiteSpace(nickName))
+                            displayName = nickName;
+                        else if (!string.IsNullOrWhiteSpace(playerName))
+                            displayName = playerName;
+                        else
+                            displayName = steam64.ToString();
+
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogWarning("[OfflineUnload] Failed checking one player: " + ex.Message);
+                    }
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("[OfflineUnload] PlayerResolver.TryResolve failed: " + ex);
+                return false;
+            }
         }
 
         public static string GetBestKnownName(ulong steam64, string fallback = null)
         {
-            if (Provider.clients != null)
+            try
             {
+                if (Provider.clients == null)
+                    return fallback ?? steam64.ToString();
+
                 foreach (SteamPlayer client in Provider.clients)
                 {
-                    if (client == null || client.playerID == null)
+                    try
+                    {
+                        if (client == null)
+                            continue;
+
+                        var id = client.playerID;
+
+                        if (id == null)
+                            continue;
+
+                        ulong clientSteam64 = 0;
+
+                        try
+                        {
+                            clientSteam64 = id.steamID.m_SteamID;
+                        }
+                        catch
+                        {
+                            continue;
+                        }
+
+                        if (clientSteam64 != steam64)
+                            continue;
+
+                        string charName = "";
+                        string nickName = "";
+                        string playerName = "";
+
+                        try { charName = id.characterName ?? ""; } catch { }
+                        try { nickName = id.nickName ?? ""; } catch { }
+                        try { playerName = id.playerName ?? ""; } catch { }
+
+                        if (!string.IsNullOrWhiteSpace(charName))
+                            return charName;
+
+                        if (!string.IsNullOrWhiteSpace(nickName))
+                            return nickName;
+
+                        if (!string.IsNullOrWhiteSpace(playerName))
+                            return playerName;
+
+                        return steam64.ToString();
+                    }
+                    catch
+                    {
                         continue;
-
-                    if (client.playerID.steamID.m_SteamID != steam64)
-                        continue;
-
-                    string charName = client.playerID.characterName ?? "";
-                    string nickName = client.playerID.nickName ?? "";
-                    string playerName = client.playerID.playerName ?? "";
-
-                    if (!string.IsNullOrWhiteSpace(charName))
-                        return charName;
-
-                    if (!string.IsNullOrWhiteSpace(nickName))
-                        return nickName;
-
-                    if (!string.IsNullOrWhiteSpace(playerName))
-                        return playerName;
+                    }
                 }
+            }
+            catch
+            {
             }
 
             return fallback ?? steam64.ToString();
