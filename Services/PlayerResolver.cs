@@ -1,6 +1,7 @@
 using System;
 using Rocket.API;
 using Rocket.Core.Logging;
+using Rocket.Unturned.Chat;
 using SDG.Unturned;
 
 namespace OfflineUnload.Services
@@ -41,7 +42,7 @@ namespace OfflineUnload.Services
                         if (id == null)
                             continue;
 
-                        ulong clientSteam64 = 0;
+                        ulong clientSteam64;
 
                         try
                         {
@@ -115,7 +116,7 @@ namespace OfflineUnload.Services
                         if (id == null)
                             continue;
 
-                        ulong clientSteam64 = 0;
+                        ulong clientSteam64;
 
                         try
                         {
@@ -163,7 +164,7 @@ namespace OfflineUnload.Services
 
         public static void Reply(IRocketPlayer caller, string message)
         {
-            Logger.Log("[OfflineUnload] " + message);
+            UnturnedChat.Say(caller, message);
         }
 
         private static bool Matches(string value, string input)
