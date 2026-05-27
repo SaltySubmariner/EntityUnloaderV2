@@ -388,6 +388,21 @@ namespace OfflineUnload.Services
             }
         }
 
+        private void ClearVehicleTrunkBeforeDestroy(InteractableVehicle vehicle)
+        {
+            try
+            {
+                if (vehicle == null || vehicle.trunkItems == null)
+                    return;
+
+                vehicle.trunkItems.clear();
+            }
+            catch (Exception ex)
+            {
+                Rocket.Core.Logging.Logger.LogWarning("[OfflineUnload] Failed to clear vehicle trunk before destroy: " + ex.Message);
+            }
+        }
+
         private int RemoveCaptured(OfflineUnloadSave save)
         {
             int count = 0;
@@ -404,6 +419,7 @@ namespace OfflineUnload.Services
                 if (vehicle != null)
                 {
                     PrepareVehicleBarricadesForUnload(vehicle);
+                    ClearVehicleTrunkBeforeDestroy(vehicle);
                     VehicleManager.askVehicleDestroy(vehicle);
                     count++;
                 }
