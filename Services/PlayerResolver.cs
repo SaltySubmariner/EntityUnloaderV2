@@ -164,17 +164,6 @@ namespace OfflineUnload.Services
         public static void Reply(IRocketPlayer caller, string message)
         {
             Logger.Log("[OfflineUnload] " + message);
-
-            try
-            {
-                if (caller != null)
-                {
-                    caller.SendMessage(message);
-                }
-            }
-            catch
-            {
-            }
         }
 
         private static bool Matches(string value, string input)
