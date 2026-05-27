@@ -1,7 +1,6 @@
 using System;
 using Rocket.API;
 using Rocket.Core.Logging;
-using Rocket.Unturned.Chat;
 using SDG.Unturned;
 
 namespace OfflineUnload.Services
@@ -164,7 +163,18 @@ namespace OfflineUnload.Services
 
         public static void Reply(IRocketPlayer caller, string message)
         {
-            UnturnedChat.Say(caller, message);
+            Logger.Log("[OfflineUnload] " + message);
+
+            try
+            {
+                if (caller != null)
+                {
+                    caller.SendMessage(message);
+                }
+            }
+            catch
+            {
+            }
         }
 
         private static bool Matches(string value, string input)
