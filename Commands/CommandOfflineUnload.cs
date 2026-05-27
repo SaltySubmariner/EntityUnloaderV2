@@ -1,35 +1,45 @@
-using OfflineUnload.Services;
 using Rocket.API;
-using System.Collections.Generic;
+using Rocket.Core.Commands;
+using Rocket.Unturned.Chat;
+using Rocket.Unturned.Player;
+using OfflineUnload.Services;
 
 namespace OfflineUnload.Commands
 {
-    public class CommandOfflineUnload : IRocketCommand
+    public class CommandOfflineUnload : RocketCommand
     {
-        public AllowedCaller AllowedCaller => AllowedCaller.Both;
-        public string Name => "lo";
-        public string Help => "Manually unload a player's saved entities.";
-        public string Syntax => "/lo <name|steam64>";
-        public List<string> Aliases => new List<string> { "offlineunload" };
-        public List<string> Permissions => new List<string> { "offlineunload.unload" };
+        public override AllowedCaller AllowedCaller => AllowedCaller.Both;
 
-        public void Execute(IRocketPlayer caller, string[] command)
+        public override string Name => "offlineunload";
+
+        public override string Help => "Unload a player's structures, barricades, and vehicles.";
+
+        public override string Syntax => "/lo <player/steam64>";
+
+        public override List<string> Aliases => new List<string> { "lo" };
+
+        public override List<string> Permissions => new List<string> { "offlineunload.lo" };
+
+        protected override void Execute(IRocketPlayer caller, string[] command)
         {
             if (command.Length < 1)
             {
-                PlayerResolver.Reply(caller, "Usage: /lo <name|steam64>");
+                UnturnedChat.Say(caller, $"Usage: {Syntax}");
                 return;
             }
 
-            string input = string.Join(" ", command);
-            if (!PlayerResolver.TryResolve(input, out ulong ownerId, out string displayName))
+            if (!PlayerResolver.TryResolve(command[0], out ulong steam64, out string displayName))
             {
-                PlayerResolver.Reply(caller, $"Could not find online player or Steam64: {input}");
+                UnturnedChat.Say(caller, $"Player not found: {command[0]}");
                 return;
             }
 
-            int count = OfflineUnloadPlugin.Instance.Service.SaveAndUnload(ownerId, "manual");
-            PlayerResolver.Reply(caller, $"Unloaded {count} objects for {displayName} ({ownerId}).");
+            int removed = OfflineUnloadPlugin.Instance.Manager.SaveAndUnload(steam64);
+
+            UnturnedChat.Say(
+                caller,
+                $"Unloaded {removed} objects for {displayName} ({steam64})."
+            );
         }
     }
 }
