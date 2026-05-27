@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using Rocket.API;
+using Rocket.Core.Logging;
 using SDG.Unturned;
 
 namespace OfflineUnload.Services
@@ -74,6 +76,11 @@ namespace OfflineUnload.Services
             }
 
             return fallback ?? steam64.ToString();
+        }
+
+        public static void Reply(IRocketPlayer caller, string message)
+        {
+            Logger.Log("[OfflineUnload] " + message);
         }
     }
 }
