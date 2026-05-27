@@ -1,10 +1,10 @@
-using Rocket.API;
-using SDG.Unturned;
 using System;
+using System.Linq;
+using SDG.Unturned;
 
 namespace OfflineUnload.Services
 {
-    internal static class PlayerResolver
+    public static class PlayerResolver
     {
         public static bool TryResolve(string input, out ulong steam64, out string displayName)
         {
@@ -14,83 +14,66 @@ namespace OfflineUnload.Services
             if (string.IsNullOrWhiteSpace(input))
                 return false;
 
+            input = input.Trim();
+
+            // Steam64 direct
             if (ulong.TryParse(input, out steam64))
             {
                 displayName = GetBestKnownName(steam64, input);
                 return true;
             }
 
-            string needle = input.Trim().ToLowerInvariant();
-
-            foreach (SteamPlayer client in Provider.clients)
-            {
-                if (client == null || client.playerID == null)
-                    continue;
-
-                string characterName = client.playerID.characterName ?? string.Empty;
-                string playerName = client.playerID.playerName ?? string.Empty;
-                string nickName = client.playerID.nickName ?? string.Empty;
-
-                if (Matches(characterName, needle) || Matches(playerName, needle) || Matches(nickName, needle))
+            var player = Provider.clients
+                .Select(c => c?.player)
+                .FirstOrDefault(p =>
                 {
-                    steam64 = client.playerID.steamID.m_SteamID;
-                    displayName = !string.IsNullOrWhiteSpace(characterName) ? characterName :
-                                  !string.IsNullOrWhiteSpace(playerName) ? playerName :
-                                  !string.IsNullOrWhiteSpace(nickName) ? nickName : steam64.ToString();
-                    return true;
-                }
-            }
+                    if (p?.channel?.owner?.playerID == null)
+                        return false;
 
-            return false;
-        }
+                    string charName = p.channel.owner.playerID.characterName ?? "";
+                    string nickName = p.channel.owner.playerID.nickName ?? "";
 
-        public static string GetBestKnownName(ulong steam64, string fallback = "Unknown")
-        {
-            foreach (SteamPlayer client in Provider.clients)
-            {
-                if (client == null || client.playerID == null || client.playerID.steamID.m_SteamID != steam64)
-                    continue;
+                    return charName.Equals(input, StringComparison.OrdinalIgnoreCase)
+                        || nickName.Equals(input, StringComparison.OrdinalIgnoreCase)
+                        || charName.IndexOf(input, StringComparison.OrdinalIgnoreCase) >= 0
+                        || nickName.IndexOf(input, StringComparison.OrdinalIgnoreCase) >= 0;
+                });
 
-                string characterName = client.playerID.characterName ?? string.Empty;
-                string playerName = client.playerID.playerName ?? string.Empty;
-                string nickName = client.playerID.nickName ?? string.Empty;
-
-                if (!string.IsNullOrWhiteSpace(characterName)) return characterName;
-                if (!string.IsNullOrWhiteSpace(playerName)) return playerName;
-                if (!string.IsNullOrWhiteSpace(nickName)) return nickName;
-            }
-
-            return string.IsNullOrWhiteSpace(fallback) ? steam64.ToString() : fallback;
-        }
-
-        private static bool Matches(string value, string needle)
-        {
-            if (string.IsNullOrWhiteSpace(value))
+            if (player == null)
                 return false;
 
-            string lower = value.ToLowerInvariant();
-            return lower == needle || lower.Contains(needle);
+            steam64 = player.channel.owner.playerID.steamID.m_SteamID;
+
+            displayName =
+                player.channel.owner.playerID.characterName
+                ?? player.channel.owner.playerID.nickName
+                ?? steam64.ToString();
+
+            return true;
         }
 
-        public static void Reply(IRocketPlayer caller, string message)
+        public static string GetBestKnownName(ulong steam64, string fallback = null)
         {
-            if (caller == null || caller.Id == "Console")
+            try
             {
-                Rocket.Core.Logging.Logger.Log("[OfflineUnload] " + message);
-                return;
-            }
+                var player = Provider.clients
+                    .Select(c => c?.player)
+                    .FirstOrDefault(p =>
+                        p?.channel?.owner?.playerID?.steamID.m_SteamID == steam64);
 
-            if (ulong.TryParse(caller.Id, out ulong callerId))
-            {
-                Player player = PlayerTool.getPlayer(new Steamworks.CSteamID(callerId));
-                if (player != null)
+                if (player?.channel?.owner?.playerID != null)
                 {
-                    ChatManager.serverSendMessage(message, UnityEngine.Color.green, null, player.channel.owner, EChatMode.SAY, null, true);
-                    return;
+                    return player.channel.owner.playerID.characterName
+                        ?? player.channel.owner.playerID.nickName
+                        ?? steam64.ToString();
                 }
             }
+            catch
+            {
+                // ignored intentionally
+            }
 
-            Rocket.Core.Logging.Logger.Log("[OfflineUnload] " + message);
+            return fallback ?? steam64.ToString();
         }
     }
 }
