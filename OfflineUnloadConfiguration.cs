@@ -15,6 +15,9 @@ namespace OfflineUnload
         public bool CloseOpenStorageBeforeUnload { get; set; }
         public bool DenyStorageOpenWhileUnloading { get; set; }
         public bool OnlyOwnedLockedVehicles { get; set; }
+        public bool BypassAdmins { get; set; }
+        public List<string> BypassPermissions { get; set; }
+        public List<string> BypassGroupIds { get; set; }
         public List<ushort> BlacklistedStructureIds { get; set; }
         public List<ushort> BlacklistedBarricadeIds { get; set; }
         public List<ushort> BlacklistedVehicleIds { get; set; }
@@ -31,6 +34,9 @@ namespace OfflineUnload
             CloseOpenStorageBeforeUnload = true;
             DenyStorageOpenWhileUnloading = true;
             OnlyOwnedLockedVehicles = true;
+            BypassAdmins = true;
+            BypassPermissions = new List<string> { "offlineunload.bypass" };
+            BypassGroupIds = new List<string> { "admin", "owner" };
             BlacklistedStructureIds = new List<ushort>();
             BlacklistedBarricadeIds = new List<ushort>();
             BlacklistedVehicleIds = new List<ushort>();
