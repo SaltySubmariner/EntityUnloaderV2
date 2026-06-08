@@ -32,6 +32,12 @@ namespace OfflineUnload.Commands
                 return;
             }
 
+            if (OfflineUnloadPlugin.Instance.Service.ShouldBypassUnload(ownerId))
+            {
+                PlayerResolver.Reply(caller, "Skipped unload for protected player " + displayName + " (" + ownerId + ").");
+                return;
+            }
+
             int count = OfflineUnloadPlugin.Instance.Service.SaveAndUnload(ownerId, "manual");
             PlayerResolver.Reply(caller, "Unloaded " + count + " objects for " + displayName + " (" + ownerId + ").");
         }
