@@ -36,7 +36,7 @@ namespace OfflineUnload
             OnlyOwnedLockedVehicles = true;
             BypassAdmins = true;
             BypassPermissions = new List<string> { "offlineunload.bypass" };
-            BypassGroupIds = new List<string> { "admin", "owner" };
+            BypassGroupIds = new List<string> { "Admin", "StaffManager", "Owner" };
             BlacklistedStructureIds = new List<ushort>();
             BlacklistedBarricadeIds = new List<ushort>();
             BlacklistedVehicleIds = new List<ushort>();
