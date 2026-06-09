@@ -213,6 +213,15 @@ namespace OfflineUnload.Services
             public string Id { get; }
             public string DisplayName => Id;
             public bool IsAdmin => false;
+
+            public int CompareTo(object obj)
+            {
+                var other = obj as IRocketPlayer;
+                if (other == null)
+                    return 1;
+
+                return string.Compare(Id, other.Id, StringComparison.Ordinal);
+            }
         }
 
         private OfflineUnloadSave Capture(ulong ownerId, string reason)
