@@ -97,4 +97,4 @@ namespace OfflineUnload.Services
             if (count > 0)
             {
                 File.Delete(path);
-                Rocket.Core.Logging.Logger.Log($"[OfflineUnload] Restored {count}/{expected} objects for {ownerId} and deleted JSON save.");
+                Rocket.Core.Logging.Logger.Log("[OfflineUnload] Restored " + count + "/" + expected + " objects for " + ownerId + " and deleted JSON save.");
