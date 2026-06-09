@@ -55,6 +55,12 @@ namespace OfflineUnload
             if (!Configuration.Instance.AutoUnloadOnDisconnect)
                 return;
 
+            if (Service.ShouldBypassUnload(playerId.m_SteamID))
+            {
+                Rocket.Core.Logging.Logger.Log("[OfflineUnload] Skipped disconnect unload for protected player " + playerId.m_SteamID + ".");
+                return;
+            }
+
             StartCoroutine(UnloadAfterDelay(playerId));
         }
 
